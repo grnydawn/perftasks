@@ -16,21 +16,17 @@ _re_cesm_stat2 = re.compile(r"\s*\*+\sGLOBAL\sSTATISTICS\s+\(")
 _re_stat_table1 = re.compile(r"name\s+ncalls\s+nranks\s+mean_time")
 _re_stat_table2 = re.compile(r"name\s+processes\s+threads\s+count")
 
-class CesmTimingPaserTask(perftask.TaskFrameUnit):
+class CesmTimingPaserTask(perftask.TaskFrame):
 
-    def __init__(self, ctr, parent, url, argv, env):
+    def __init__(self, parent, url, argv):
+
+        self.set_data_argument("timingfile", metavar="path", evaluate=False, nargs="+", help="CESM stat timing file.")
 
         try:
             import pandas
             self.env["pandas"] = self.env["pd"] = pandas
         except ImportError as err:
             self.error_exit("pandas module is not found.")
-
-    def pop_inputdata(self, data):
-
-        self.timing_files = []
-        while data:
-            self.timing_files.append(data.pop(0))
 
     def perform(self):
 
@@ -42,13 +38,8 @@ class CesmTimingPaserTask(perftask.TaskFrameUnit):
 
         contents = {}
 
-        if not self.timing_files and self.env["D"]:
-            self.timing_files = self.env["D"]
-
-        self.env["D"] = []
-
         # read timing file
-        for path in self.timing_files:
+        for path in self.targs.timingfile:
             path = os.path.abspath(os.path.realpath(path))
             try:
                 with gzip.open(path) as zf:
@@ -70,7 +61,7 @@ class CesmTimingPaserTask(perftask.TaskFrameUnit):
         if not self.env["D"]:
             self.error_exit("No cesm timing input is found.")
 
-        self.targs.forward = ["D=D"]
+        self.add_forward("D", self.env["D"])
    
         return 0     
     

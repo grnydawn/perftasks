@@ -15,21 +15,17 @@ _re_cesm_timing1 = re.compile(r"[\s\r\n]*-+\sCCSM\sTIMING\sPROFILE\s-+[\r\n]+")
 _re_cesm_timing2 = re.compile(r"[\s\r\n]*-+\sDRIVER\sTIMING\sFLOWCHART")
 _re_cesm_timing3 = re.compile(r"\s*(?P<name>[^:\n]+):(?P<value>[^\n]+)")
 
-class CesmTimingPaserTask(perftask.TaskFrameUnit):
+class CesmTimingPaserTask(perftask.TaskFrame):
 
-    def __init__(self, ctr, parent, url, argv, env):
+    def __init__(self, parent, url, argv):
+
+        self.set_data_argument("timingfile", metavar="path", evaluate=False, nargs="+", help="CESM component timing file.")
 
         try:
             import pandas
             self.env["pandas"] = self.env["pd"] = pandas
         except ImportError as err:
             self.error_exit("pandas module is not found.")
-
-    def pop_inputdata(self, data):
-
-        self.timing_files = []
-        while data:
-            self.timing_files.append(data.pop(0))
 
     def perform(self):
 
@@ -41,13 +37,8 @@ class CesmTimingPaserTask(perftask.TaskFrameUnit):
 
         contents = {}
 
-        if not self.timing_files and self.env["D"]:
-            self.timing_files = self.env["D"]
-
-        self.env["D"] = []
-
         # read timing file
-        for path in self.timing_files:
+        for path in self.targs.timingfile:
             path = os.path.abspath(os.path.realpath(path))
             try:
                 with gzip.open(path) as zf:
@@ -66,7 +57,7 @@ class CesmTimingPaserTask(perftask.TaskFrameUnit):
         if not self.env["D"]:
             self.error_exit("No cesm timing input is found.")
 
-        self.targs.forward = ["D=D"]
+        self.add_forward("D", self.env["D"])
    
         return 0     
     
