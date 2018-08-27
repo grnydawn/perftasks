@@ -8,11 +8,26 @@ import perftask
 
 FORTRAN_EXTS = [ ".F", ".F90", ".f", ".f90"]
 
-re_startf = re.compile("call\\s+t_startf\\s*\\(\\s*[\"'](?P<name>[^\"']+)[\"']\\s*\\)")
-re_stopf = re.compile("call\\s+t_stopf\\s*\\(\\s*[\"'](?P<name>[^\"']+)[\"']\\s*\\)")
+re_startf = re.compile("call\\s+t_startf\\s*\\(\\s*[\"'](?P<name>[^\"']+)[\"']\\s*[\\),]", re.I)
+re_stopf = re.compile("call\\s+t_stopf\\s*\\(\\s*[\"'](?P<name>[^\"']+)[\"']\\s*[\\),]", re.I)
+re_subp = re.compile("[\\s\\w]*(subroutine|function)\s*\w+\\(", re.I)
 
 # TODO: upward search for subroutine(function) and module and filepath
 
+def parent(loc):
+    with open(loc[0], 'r') as f:
+        lines = f.readlines()
+        idx = loc[1]
+        end = idx
+        while idx >= 0:
+            match = re_subp.search(lines[idx])
+            if match:
+                return lines[idx].strip()
+            end = idx
+            idx -= 1
+   
+    return "NOT FOUND"
+ 
 class CesmGptlParserTask(perftask.TaskFrameUnit):
 
     def __init__(self, ctr, parent, url, argv, env):
@@ -64,4 +79,5 @@ class CesmGptlParserTask(perftask.TaskFrameUnit):
                 self.error_exit("'%s' does not exist."%path)
 
         self.env['gptl'] = self.gptl_blocks
-        self.targs.forward = ["D=[gptl]"]
+        self.env['parent'] = parent
+        self.targs.forward = ["D=[gptl]", "parent=parent"]
