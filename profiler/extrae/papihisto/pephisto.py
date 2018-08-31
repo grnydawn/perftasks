@@ -23,19 +23,8 @@ LABEL_SIZE = 16
 LINEWIDTH = 3
 
 user_function_event = "60000019"
+number_of_bins = 200 
 
-#
-#import os
-#import re
-#import gzip
-#import perftask
-#import StringIO
-#
-#_re_cesm_stat1 = re.compile(r"\s*Total\sranks\sin\scommunicator")
-#_re_cesm_stat2 = re.compile(r"\s*\*+\sGLOBAL\sSTATISTICS\s+\(")
-#_re_stat_table1 = re.compile(r"name\s+ncalls\s+nranks\s+mean_time")
-#_re_stat_table2 = re.compile(r"name\s+processes\s+threads\s+count")
-#
 class ExtraePcfData(object):
 
     def __init__(self, path):
@@ -97,12 +86,6 @@ class ProfilerExtraePapiHistoTask(perftask.TaskFrame):
     def __init__(self, parent, url, argv):
 
         self.set_data_argument("tracefile", metavar="path", evaluate=False, help="Extrae trace prv file.")
-#
-#        try:
-#            import pandas
-#            self.env["pandas"] = self.env["pd"] = pandas
-#        except ImportError as err:
-#            self.error_exit("pandas module is not found.")
 
     def perform(self):
 
@@ -158,19 +141,6 @@ class ProfilerExtraePapiHistoTask(perftask.TaskFrame):
                     # hwc events: 4200XXXX
                     # user function event: 60000019
 
-        #import pdb; pdb.set_trace()                            
-        #np.random.seed(19680801)
-        number_of_bins = 100 
-
-        # An example of three data sets to compare
-#        number_of_data_points = 387
-#        func_names = ["A", "B", "C"]
-#        data1 = [np.random.normal(0, 1, number_of_data_points),
-#                     np.random.normal(6, 1, number_of_data_points),
-#                     np.random.normal(-3, 1, number_of_data_points)]
-#        data2 = [np.random.normal(0, 1, number_of_data_points),
-#                     np.random.normal(6, 1, number_of_data_points),
-#                     np.random.normal(-3, 1, number_of_data_points)]
 
         # generate plot pdf file
 
@@ -181,10 +151,10 @@ class ProfilerExtraePapiHistoTask(perftask.TaskFrame):
             labels = []
             for  fid in keys:
                 desc = self.pcf.get_pcf_event(int(user_function_event))['values'][int(fid)]
-                if isinstance(desc, (list, tuple)):
-                    labels.append(desc[-1])
-                else:
-                    labels.append(desc)
+                item = desc[-1].strip() if isinstance(desc, (list, tuple)) else desc.strip()
+                if item.startswith("["): item = item[1:].lstrip()
+                if item.endswith("]"): item = item[:-1].rstrip()
+                labels.append(item.split("_mp_")[-1])
 
             #labels = func_data_sets.keys()
             data_sets = [np.asarray(func_data_sets[l]) for l in keys]
@@ -225,56 +195,3 @@ class ProfilerExtraePapiHistoTask(perftask.TaskFrame):
             plt.cla()
 
         pdf.close()
-
-
-
-#        def cesm_stat(c):
-#            if _re_cesm_stat1.match(c):
-#                return True
-#            elif _re_cesm_stat2.match(c):
-#                return True
-#
-#        contents = {}
-#
-#        # read timing file
-#        for path in self.targs.timingfile:
-#            path = os.path.abspath(os.path.realpath(path))
-#            try:
-#                with gzip.open(path) as zf:
-#                    contents[path] = zf.read()
-#            except IOError as err:
-#                with open(path) as f:
-#                    contents[path] = f.read()
-#
-#        # handle other options
-#
-#        # default action
-#
-#        for path, content in contents.items():
-#            if cesm_stat(content):
-#                self.env["D"].append(self._cesm_stat(content))
-#            else:
-#                self.error_exit("Unknown cesm timing file: %s"%path)
-#
-#        if not self.env["D"]:
-#            self.error_exit("No cesm timing input is found.")
-#
-#        self.add_forward("D", self.env["D"])
-#   
-#        return 0     
-#    
-#    def _cesm_stat(self, content):
-#        def _read_table(c, start):
-#            table_str = c[start:].replace("(", "").replace(")", "").strip()
-#            return self.env["pd"].read_csv(StringIO.StringIO(table_str), sep="\s+",
-#                error_bad_lines=False, index_col=0) 
-#
-#        stat_df = None
-#        match = _re_stat_table1.search(content)
-#        if match:
-#            stat_df = _read_table(content, match.start())
-#        else:
-#            match = _re_stat_table2.search(content)
-#            if match:
-#                stat_df = _read_table(content, match.start())
-#        return stat_df
