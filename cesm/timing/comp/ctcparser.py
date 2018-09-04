@@ -47,6 +47,8 @@ class CesmTimingPaserTask(perftask.TaskFrame):
                 with open(path) as f:
                     contents[path] = f.read()
 
+        self.env["D"] = []
+
         for path, content in contents.items():
             block = cesm_timing(content)
             if block:

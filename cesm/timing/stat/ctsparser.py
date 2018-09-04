@@ -52,6 +52,8 @@ class CesmTimingPaserTask(perftask.TaskFrame):
 
         # default action
 
+        self.env["D"] = []
+
         for path, content in contents.items():
             if cesm_stat(content):
                 self.env["D"].append(self._cesm_stat(content))
