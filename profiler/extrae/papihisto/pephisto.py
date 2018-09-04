@@ -11,7 +11,7 @@ try:
     from  matplotlib import pyplot as plt
     from matplotlib.backends.backend_pdf import PdfPages
 
-    pdf = PdfPages('papihosto.pdf')
+    pdf = PdfPages('papihisto.pdf')
 except Exception as e:
     print ('ERROR: matplotlib module is not loaded: %s'%str(e))
     sys.exit(-1)
@@ -85,7 +85,7 @@ class ProfilerExtraePapiHistoTask(perftask.TaskFrame):
     # check path
     def __init__(self, parent, url, argv):
 
-        self.set_data_argument("tracefile", metavar="path", evaluate=False, help="Extrae trace prv file.")
+        self.add_data_argument("tracefile", metavar="path", evaluate=False, help="Extrae trace prv file.")
 
     def perform(self):
 

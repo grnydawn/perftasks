@@ -20,7 +20,7 @@ class CesmTimingPaserTask(perftask.TaskFrame):
 
     def __init__(self, parent, url, argv):
 
-        self.set_data_argument("timingfile", metavar="path", evaluate=False, nargs="+", help="CESM stat timing file.")
+        self.add_data_argument("timingfile", metavar="path", evaluate=False, nargs="+", help="CESM stat timing file.")
 
         try:
             import pandas

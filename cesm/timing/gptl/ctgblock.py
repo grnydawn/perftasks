@@ -28,17 +28,13 @@ def parent(loc):
    
     return "NOT FOUND"
  
-class CesmGptlParserTask(perftask.TaskFrameUnit):
+class CesmGptlParserTask(perftask.TaskFrame):
 
-    def __init__(self, ctr, parent, url, argv, env):
+    def __init__(self, parent, url, argv):
+
+        self.add_data_argument("path", metavar="path", nargs="+", help="Fortran source tree")
 
         self.gptl_blocks = {} # name: (path, start, end)
-
-    def pop_inputdata(self, data):
-
-        self.cesm_srcpaths = []
-        while data:
-            self.cesm_srcpaths.append(data.pop(0))
 
     def _parse_gptl(self, fpath):
 
@@ -63,6 +59,8 @@ class CesmGptlParserTask(perftask.TaskFrameUnit):
 
     def perform(self):
 
+        self.cesm_srcpaths = self.targs.path
+
         for path in self.cesm_srcpaths:
             if os.path.exists(path):
                 if os.path.isfile(path):
@@ -78,6 +76,6 @@ class CesmGptlParserTask(perftask.TaskFrameUnit):
             else:
                 self.error_exit("'%s' does not exist."%path)
 
-        self.env['gptl'] = self.gptl_blocks
-        self.env['parent'] = parent
-        self.targs.forward = ["D=[gptl]", "parent=parent"]
+        self.add_forward('D', self.gptl_blocks)
+
+        return 0
