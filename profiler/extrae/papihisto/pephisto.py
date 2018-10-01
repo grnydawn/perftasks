@@ -146,6 +146,7 @@ class ProfilerExtraePapiHistoTask(perftask.TaskFrame):
 
         for idx, (hwc_name, func_data_sets) in enumerate(hwc_bins.items()):
 
+            pdf = PdfPages('%s.pdf'%self.pcf.get_pcf_event(int(hwc_name))['desc'].split()[0])
 
             keys = func_data_sets.keys()
             labels = []
@@ -194,4 +195,4 @@ class ProfilerExtraePapiHistoTask(perftask.TaskFrame):
             pdf.savefig()
             plt.cla()
 
-        pdf.close()
+            pdf.close()

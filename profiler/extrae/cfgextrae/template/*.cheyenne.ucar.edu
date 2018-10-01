@@ -29,35 +29,69 @@
 		<syscall enabled="no">1-3</syscall>
   </callers>
 
-  <user-functions enabled="yes" list="/glade/u/home/youngsun/src/opt-se-cslam/scripts/user-functions.dat" exclude-automatic-functions="no">
+  <user-functions enabled="yes" list="user-functions.dat" exclude-automatic-functions="no">
     <counters enabled="yes" />
   </user-functions>
 
   <counters enabled="yes">
     <cpu enabled="yes" starting-set-distribution="random">
-      <set enabled="yes" domain="all" changeat-time="100m"  >
-        PAPI_TOT_INS,PAPI_TOT_CYC,PAPI_L3_TCM,RESOURCE_STALLS
-        <sampling enabled="no" frequency="100000000">PAPI_TOT_CYC</sampling>
-      </set>
-      <set enabled="yes" domain="all" changeat-time="100m"  >
-        PAPI_TOT_INS,PAPI_TOT_CYC,PAPI_L1_TCM,PAPI_L2_TCM
-        <sampling enabled="no" frequency="100000000">PAPI_TOT_CYC</sampling>
-      </set>
-      <set enabled="yes" domain="all" changeat-time="100m"  >
-        PAPI_TOT_INS,PAPI_TOT_CYC,PAPI_SR_INS
-        <sampling enabled="no" frequency="100000000">PAPI_TOT_CYC</sampling>
-      </set>
-      <set enabled="yes" domain="all" changeat-time="100m"  >
-        PAPI_TOT_INS,PAPI_TOT_CYC
-        <sampling enabled="no" frequency="100000000">PAPI_TOT_CYC</sampling>
-      </set>
-      <set enabled="yes" domain="all" changeat-time="100m"  >
-        PAPI_TOT_INS,PAPI_TOT_CYC,PAPI_VEC_DP,PAPI_DP_OPS
-        <sampling enabled="no" frequency="100000000">PAPI_TOT_CYC</sampling>
-      </set>
-      <set enabled="yes" domain="all" changeat-time="100m"  >
-        PAPI_TOT_INS,PAPI_TOT_CYC,PAPI_TLB_DM,PAPI_TLB_IM
-        <sampling enabled="no" frequency="100000000">PAPI_TOT_CYC</sampling>
+		<!-- counter set 1 -->
+		<set enabled="yes" domain="all" changeat-time="100000us">
+		  PAPI_TOT_INS,PAPI_L1_DCM,PAPI_L1_ICM,PAPI_L2_DCM,PAPI_L2_ICM,PAPI_L1_TCM,PAPI_L2_TCM
+		</set>
+		<!-- counter set 2 -->
+		<set enabled="yes" domain="all" changeat-time="100000us">
+		  PAPI_TOT_INS,PAPI_L3_TCM,PAPI_CA_SNP,PAPI_CA_SHR,PAPI_CA_CLN
+		</set>
+		<!-- counter set 3 -->
+		<set enabled="yes" domain="all" changeat-time="100000us">
+		  PAPI_TOT_INS,PAPI_CA_INV,PAPI_CA_ITV,PAPI_L3_LDM,PAPI_TLB_IM
+		</set>
+		<!-- counter set 4 -->
+		<set enabled="yes" domain="all" changeat-time="100000us">
+		  PAPI_TOT_INS,PAPI_L1_LDM,PAPI_L1_STM,PAPI_L2_LDM,PAPI_L2_STM
+		</set>
+		<!-- counter set 5 -->
+		<set enabled="yes" domain="all" changeat-time="100000us">
+		  PAPI_TOT_INS,PAPI_TLB_DM
+		</set>
+		<!-- counter set 6 -->
+		<set enabled="yes" domain="all" changeat-time="100000us">
+		  PAPI_TOT_INS,PAPI_BR_UCN,PAPI_BR_CN,PAPI_BR_TKN,PAPI_BR_NTK,PAPI_BR_MSP,PAPI_BR_PRC,PAPI_BR_INS
+		</set>
+		<!-- counter set 7 -->
+		<set enabled="yes" domain="all" changeat-time="100000us">
+		  PAPI_TOT_INS,PAPI_PRF_DM,PAPI_MEM_WCY,PAPI_LD_INS,PAPI_SR_INS,PAPI_LST_INS
+		</set>
+		<!-- counter set 8 -->
+		<set enabled="yes" domain="all" changeat-time="100000us">
+		  PAPI_TOT_INS,PAPI_STL_ICY,PAPI_STL_CCY,PAPI_FUL_CCY,PAPI_RES_STL
+		</set>
+		<!-- counter set 9 -->
+		<set enabled="yes" domain="all" changeat-time="100000us">
+		  PAPI_TOT_INS,PAPI_FUL_ICY,PAPI_TOT_CYC,PAPI_L2_DCA
+		</set>
+		<!-- counter set 10 -->
+		<set enabled="yes" domain="all" changeat-time="100000us">
+		  PAPI_TOT_INS,PAPI_L3_DCA,PAPI_L2_DCR,PAPI_L2_ICA,PAPI_L3_ICA,PAPI_L2_ICR,PAPI_L3_ICR,PAPI_L3_TCA
+		</set>
+		<!-- counter set 11 -->
+		<set enabled="yes" domain="all" changeat-time="100000us">
+		  PAPI_TOT_INS,PAPI_L3_DCR,PAPI_L2_DCW,PAPI_L3_DCW,PAPI_L3_TCR,PAPI_L2_TCW,PAPI_L3_TCW,PAPI_REF_CYC
+		</set>
+		<!-- counter set 12 -->
+		<set enabled="yes" domain="all" changeat-time="100000us">
+		  PAPI_TOT_INS,PAPI_L2_TCA,PAPI_L2_TCR
+		</set>
+		<!-- counter set 13 -->
+		<set enabled="yes" domain="all" changeat-time="100000us">
+		  PAPI_TOT_INS,PAPI_SP_OPS,PAPI_VEC_SP
+		</set>
+		<!-- counter set 14 -->
+		<set enabled="yes" domain="all" changeat-time="100000us">
+		  PAPI_TOT_INS,PAPI_DP_OPS,PAPI_VEC_DP
+          <sampling enabled="no" frequency="100000000">PAPI_TOT_CYC</sampling>
+		</set>
       </set>
     </cpu>
     <network enabled="no" />
@@ -97,7 +131,7 @@
     <mpi-statistics enabled="no" />
   </bursts>
 
-  <sampling enabled="yes" type="default" period="0.2m" variability="0.1m" />
+  <sampling enabled="yes" type="default" period="2m" variability="1m" />
 
   <dynamic-memory enabled="no">
     <alloc enabled="yes" threshold="32768" />
