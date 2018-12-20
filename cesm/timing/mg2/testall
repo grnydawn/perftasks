@@ -1,0 +1,96 @@
+
+
+[plot]
+
+#cesm   = cesm_mg2_timing.py kerneltiming --assert-promote "len(cesm_mg2)>0"
+cesm	= cesm_mg2_timing.py kerneltiming --
+		  mg2_data.py -a timing --
+		  plotmpl.py
+			-p "hist@values, , bins=100, facecolor='r', alpha=0.75, range=[0.9, 1.35]"
+			-t "'CESM2.0.1 228 MPI ranks, 3 Threads on 8 Cheyenne nodes'"
+			-x "label@'Elapsed time of MG2 microphysics (mili-second)'"
+			-y "label@'frequency'"
+			-s "'cesm_mg2_elapsedtime.pdf'"
+			--noshow
+			-g
+
+kernel1  = kernel_mg2_timing.py CESM2_MG2/orig --
+		  mg2_data.py -a "timing[1]" --
+		  plotmpl.py
+			-p "hist@values, bins=100, facecolor='b', alpha=0.75"
+			-t "'CESM2.0.1 MG2, 1 kernel process on 1 Cheyenne node'"
+			-x "label@'Elapsed time of MG2 kernel (mili-second)'"
+			-y "label@'frequency'"
+			-s "'kernel_mg2_elapsedtime_1.pdf'"
+			--noshow
+			-g
+
+kernel12  = kernel_mg2_timing.py CESM2_MG2/orig --
+		  mg2_data.py -a "timing[12]" --
+		  plotmpl.py
+			-p "hist@values, bins=100, facecolor='b', alpha=0.75"
+			-t "'CESM2.0.1 MG2, 12 kernel processes on 1 Cheyenne node'"
+			-x "label@'Elapsed time of MG2 kernel (mili-second)'"
+			-y "label@'frequency'"
+			-s "'kernel_mg2_elapsedtime_12.pdf'"
+			--noshow
+			-g
+
+kernel24  = kernel_mg2_timing.py CESM2_MG2/orig --
+		  mg2_data.py -a "timing[24]" --
+		  plotmpl.py
+			-p "hist@values, bins=100, facecolor='b', alpha=0.75"
+			-t "'CESM2.0.1 MG2, 24 kernel processes on 1 Cheyenne node'"
+			-x "label@'Elapsed time of MG2 kernel (mili-second)'"
+			-y "label@'frequency'"
+			-s "'kernel_mg2_elapsedtime_24.pdf'"
+			--noshow
+			-g
+
+kernel36  = kernel_mg2_timing.py CESM2_MG2/orig --
+		  mg2_data.py -a "timing[36]" --
+		  plotmpl.py
+			-p "hist@values, bins=100, facecolor='b', alpha=0.75"
+			-t "'CESM2.0.1 MG2, 36 kernel processes on 1 Cheyenne node'"
+			-x "label@'Elapsed time of MG2 kernel (mili-second)'"
+			-y "label@'frequency'"
+			-s "'kernel_mg2_elapsedtime_36.pdf'"
+			--noshow
+			-g
+
+kernel48  = kernel_mg2_timing.py CESM2_MG2/orig --
+		  mg2_data.py -a "timing[48]" --
+		  plotmpl.py
+			-p "hist@values, bins=100, facecolor='b', alpha=0.75"
+			-t "'CESM2.0.1 MG2, 48 kernel processes on 1 Cheyenne node'"
+			-x "label@'Elapsed time of MG2 kernel (mili-second)'"
+			-y "label@'frequency'"
+			-s "'kernel_mg2_elapsedtime_48.pdf'"
+			--noshow
+			-g
+
+kernel60  = kernel_mg2_timing.py CESM2_MG2/orig --
+		  mg2_data.py -a "timing[60]" --
+		  plotmpl.py
+			-p "hist@values, bins=100, facecolor='b', alpha=0.75"
+			-t "'CESM2.0.1 MG2, 60 kernel processes on 1 Cheyenne node'"
+			-x "label@'Elapsed time of MG2 kernel (mili-second)'"
+			-y "label@'frequency'"
+			-s "'kernel_mg2_elapsedtime_60.pdf'"
+			--noshow
+			-g
+
+kernel72  = kernel_mg2_timing.py CESM2_MG2/orig --
+		  mg2_data.py -a "timing[72]" --
+		  plotmpl.py
+			-p "hist@values, bins=100, facecolor='b', alpha=0.75"
+			-t "'CESM2.0.1 MG2, 72 kernel processes on 1 Cheyenne node'"
+			-x "label@'Elapsed time of MG2 kernel (mili-second)'"
+			-y "label@'frequency'"
+			-s "'kernel_mg2_elapsedtime_72.pdf'"
+			--noshow
+			-g
+
+[sweep]
+# TODO : implement this
+#sweep   = repeat 72 -- shell "mpirun -n ${cnt} ./kernel.exe > kernel_rank${cnt}.out"

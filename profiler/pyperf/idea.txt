@@ -1,0 +1,5 @@
+- user install libpfm4
+- when installing pyperf, pyperf compile helper.c to provide enough functionalities for pyperf from libpfm4
+- pyperf uses fparser2 to get code structure
+- pyperf uses perf to actually collect perf data
+- pyperf combine all of them to provide useful information
