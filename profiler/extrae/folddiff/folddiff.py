@@ -8,9 +8,9 @@ import glob
 
 import perftask
 
-class ProfilerExtraeFolddiffTask(perftask.TaskFrame):
+class ProfilerExtraeFolddiffTask(perftask.Task):
 
-    def __init__(self, parent, url, argv):
+    def __init__(self, parent, tid, url, fragment, argv):
 
         # accept two argument to compare
 
@@ -30,15 +30,15 @@ class ProfilerExtraeFolddiffTask(perftask.TaskFrame):
         except Exception as e:
             self.parent.error_exit('ERROR: %s'%str(e))
 
-    def perform(self):
+    def perform(self, targs):
 
-        if not self.targs.region:
+        if not targs.region:
             self.parent.error_exit("Missing regions.")
 
-        if len(self.targs.region) == 1:
-            regions = self.targs.region*2
+        if len(targs.region) == 1:
+            regions = targs.region*2
         else:
-            regions = self.targs.region[:2]
+            regions = targs.region[:2]
  
         np = self.env['np']
         pd = self.env['pd']
@@ -48,7 +48,7 @@ class ProfilerExtraeFolddiffTask(perftask.TaskFrame):
         diffsums = {}
         diffsums_ins = {}
 
-        for idx, folddir in enumerate(self.targs.folddir):
+        for idx, folddir in enumerate(targs.folddir):
 
             # folddir
             if not os.path.isdir(folddir):
@@ -111,8 +111,8 @@ class ProfilerExtraeFolddiffTask(perftask.TaskFrame):
         est0 = data[0]['statdf'].loc[regions[0]].totmed*1.E-3
         est1 = data[1]['statdf'].loc[regions[1]].totmed*1.E-3
  
-        if self.targs.absolute_limit:
-            diffsums_limit = self.targs.absolute_limit*1000.
+        if targs.absolute_limit:
+            diffsums_limit = targs.absolute_limit*1000.
         else:
             # MHz
             if "PAPI_TOT_CYC" in diffsums[0].index:
@@ -131,8 +131,8 @@ class ProfilerExtraeFolddiffTask(perftask.TaskFrame):
         diffsums[1] = diffsums[1].loc[index]
         sorted_hwcs = (diffsums[1]/diffsums[0]*(est1/est0)).sort_values("event0", ascending=False, na_position='last')
 
-        if self.targs.perins_limit:
-            diffsums_ins_limit = self.targs.perins_limit*1000. 
+        if targs.perins_limit:
+            diffsums_ins_limit = targs.perins_limit*1000. 
         else:
             diffsums_ins_limit = 100. 
 

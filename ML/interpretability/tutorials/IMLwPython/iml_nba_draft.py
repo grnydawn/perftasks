@@ -1,10 +1,12 @@
 
 import os
+import itertools
 
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 from matplotlib.colorbar import ColorbarBase
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+from matplotlib.text import Text
 
 import seaborn as sns
 import numpy as np
@@ -18,6 +20,7 @@ from sklearn.metrics import make_scorer
 import warnings
 warnings.filterwarnings("ignore",category=DeprecationWarning)
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import mean_squared_error, r2_score
 
 from skll.metrics import spearman
 
@@ -36,6 +39,14 @@ import treeinterpreter.treeinterpreter as ti
 
 from pycebox.ice import ice, ice_plot
 
+# Not working
+#from pdpbox import pdp
+
+import lime
+from lime.lime_tabular import LimeTabularExplainer
+
+import shap
+
 from perftask import TaskBase
 
 RANDOM_STATE = 420
@@ -49,10 +60,9 @@ def multiproc_iter_func(max_workers, an_iter, func, item_kwarg, **kwargs):
     multiple processes. 'item_kwarg' is the keyword argument for the item in the
     iterable that we pass to the function.
     """
-    with ProcessPoolExecutor(max_workers=max_workers) as executor:
-        future_results = [executor.submit(func, **{item_kwarg: item}, **kwargs)
-                          for item in an_iter]
 
+    with ProcessPoolExecutor(max_workers=max_workers) as executor:
+        future_results = [executor.submit(func, **{item_kwarg: item}, **kwargs) for item in an_iter]
         results = [future.result() for future in future_results]
         
     return results
@@ -120,6 +130,68 @@ def create_ordered_joint_contrib_df(contrib):
                               .index)
     df = df.reindex(new_idx).reset_index(drop=True)
     return df
+
+def plot_ice_grid(dict_of_ice_dfs, data_df, features, ax_ylabel='', nrows=3, 
+                  ncols=3, figsize=(12, 12), sharex=False, sharey=True, 
+                  subplots_kws={}, rug_kws={'color':'k'}, **ice_plot_kws):
+    """A function that plots ICE plots for different features in a grid."""
+    fig, axes = plt.subplots(nrows=nrows, 
+                             ncols=ncols, 
+                             figsize=figsize,
+                             sharex=sharex,
+                             sharey=sharey,
+                             **subplots_kws)
+    # for each feature plot the ice curves and add a rug at the bottom of the 
+    # subplot
+    for f, ax in zip(features, axes.flatten()):
+        ice_plot(dict_of_ice_dfs[f], ax=ax, **ice_plot_kws)
+        # add the rug
+        sns.distplot(data_df[f], ax=ax, hist=False, kde=False, 
+                     rug=True, rug_kws=rug_kws)
+        ax.set_title('feature = ' + f)
+        ax.set_ylabel(ax_ylabel)
+        sns.despine()
+        
+    # get rid of blank plots
+    for i in range(len(features), nrows*ncols):
+        axes.flatten()[i].axis('off')
+
+    return fig
+
+def plot_2d_pdp_grid(pdp_inters, feature_pairs,
+                     ncols=3, nrows=4, figsize=(13, 16),
+                     xaxis_font_size=12, yaxis_font_size=12,
+                     contour_line_fontsize=12,
+                     tick_labelsize=10, x_quantile=None, 
+                     plot_params=None, subplots_kws={}):
+    """Plots a grid of 2D PDP plots."""
+    # create our subplots to plot our PDPs on
+    fig, axes = plt.subplots(nrows=nrows, ncols=ncols, 
+                             figsize=figsize, **subplots_kws)
+
+    # for each feature pair, plot the 2-D pdp
+    for pdp_inter, feat_pair, ax in zip(pdp_inters, feature_pairs, axes.flatten()):
+    
+        # use pdpbox's _pdp_contour_plot function to actually plot the 2D pdp
+        pdp._pdp_contour_plot(pdp_inter, feat_pair, 
+                              x_quantile=x_quantile, ax=ax, 
+                              plot_params=plot_params,
+                              fig=None)
+        # adjust some font sizes
+        ax.tick_params(labelsize=tick_labelsize)
+        ax.xaxis.get_label().set_fontsize(xaxis_font_size)
+        ax.yaxis.get_label().set_fontsize(yaxis_font_size)
+    
+        # set the contour line fontsize
+        for child in ax.get_children():
+            if isinstance(child, Text):
+                child.set(fontsize=contour_line_fontsize)   
+    
+    # get rid of empty subplots
+    for i in range(len(pdp_inters), nrows*ncols):
+        axes.flatten()[i].axis('off')
+        
+    return fig
 
 class Interperting(TaskBase):
 
@@ -245,7 +317,8 @@ class Interperting(TaskBase):
                 func()
 
                 plt.show()
-            except AttributeError:
+            except AttributeError as err:
+                import pdb; pdb.set_trace()
                 print("'{}' is not supported.".format(self.targs.name))
 
             #title = getattr(func, "__doc__")
@@ -321,7 +394,7 @@ class Interperting(TaskBase):
 
         # simple exmaple of a player with a 4.6 Forty and a Wt of 260 lbs
         example = np.array([4.6, 260, 0, 0, 0, 0, 0, 0])
-        eli5.explain_prediction_df(tree, example, feature_names=features)
+        eli5.explain_prediction_df(tree, example, feature_names=self.features)
 
         example_prec = tree.predict(example.reshape(1,-1))
 
@@ -702,4 +775,242 @@ class Interperting(TaskBase):
         plt.colorbar(sm, label='Wt')
         plt.ylabel('Pred. AV %ile')
         plt.xlabel('Forty');
+
+    def analyze_ice_center(self):
+        "Individual Conditional Expectation - Centered Feature Interaction"
+
+        # pcyebox likes the data to be in a DataFrame so let's create one with our imputed data
+        # we first need to impute the missing data
+
+        train_X_imp = self.imputer.transform(self.X)
+
+        train_X_imp_df = pd.DataFrame(train_X_imp, columns=self.features)
+
+        forty_ice_df = ice(data=train_X_imp_df, column='Forty', 
+                           predict=self.pipe.predict)
+
+        # new colormap for ICE plot
+        cmap2 = plt.get_cmap('OrRd')
+        # set color_by to Wt, in order to color each curve by that player's weight
+        ice_plot(forty_ice_df, linewidth=0.5, color_by='Wt', cmap=cmap2, plot_pdp=True,
+            pdp_kwargs={'c': 'k', 'linewidth': 5}, centered=True)
+        # ice_plot doesn't return a colorbar so we have to add one
+        # hack to add in colorbar taken from here:
+        # https://stackoverflow.com/questions/8342549/matplotlib-add-colorbar-to-a-sequence-of-line-plots/11558629#11558629
+        wt_vals = forty_ice_df.columns.get_level_values('Wt').values
+        sm = plt.cm.ScalarMappable(cmap=cmap2, 
+                                   norm=plt.Normalize(vmin=wt_vals.min(), 
+                                                      vmax=wt_vals.max()))
+        # need to create fake array for the scalar mappable or else we get an error
+        sm._A = []
+        plt.colorbar(sm, label='Wt')
+        plt.ylabel('Pred. AV %ile (centered)')
+        plt.xlabel('Forty');
+
+
+
+    def analyze_ice_grid(self):
+        "Individual Conditional Expectation - Feature Interaction Grid"
+
+        train_X_imp = self.imputer.transform(self.X)
+
+        train_X_imp_df = pd.DataFrame(train_X_imp, columns=self.features)
+
+        # create dict of ICE data for grid of ICE plots
+        train_ice_dfs = {feat: ice(data=train_X_imp_df, column=feat, predict=self.estimator.predict) 
+                         for feat in self.features}
+
+        fig = plot_ice_grid(train_ice_dfs, train_X_imp_df, self.features,
+                            ax_ylabel='Pred. AV %ile', alpha=0.3, plot_pdp=True,
+                            pdp_kwargs={'c': 'red', 'linewidth': 3},
+                            linewidth=0.5, c='dimgray')
+        fig.tight_layout()
+        fig.suptitle('ICE plots (training data)')
+        fig.subplots_adjust(top=0.89);
+
+    def analyze_ice_gc(self):
+        "Individual Conditional Expectation - Centered Feature Interaction Grid"
+
+        train_X_imp = self.imputer.transform(self.X)
+
+        train_X_imp_df = pd.DataFrame(train_X_imp, columns=self.features)
+
+        # create dict of ICE data for grid of ICE plots
+        train_ice_dfs = {feat: ice(data=train_X_imp_df, column=feat, predict=self.estimator.predict) 
+                         for feat in self.features}
+
+        fig = plot_ice_grid(train_ice_dfs, train_X_imp_df, self.features, 
+                            ax_ylabel='Pred AV %ile (centered)',
+                            alpha=.2, plot_points=False, plot_pdp=True,
+                            pdp_kwargs={"c": "red", "linewidth": 3},
+                            linewidth=0.5, c='dimgray', centered=True,
+                            sharey=False, nrows=4, ncols=2, figsize=(11,16))
+        fig.tight_layout()
+        fig.suptitle('Centered ICE plots (training data)')
+        fig.subplots_adjust(top=0.9)
+
+
+#    def analyze_pdp_2d(self):
+#        "Partial Dependence Plot - 2D Grid"
+#
+#        train_X_imp = self.imputer.transform(self.X)
+#
+#        train_X_imp_df = pd.DataFrame(train_X_imp, columns=self.features)
+#
+#        # get each possible feature pair combination
+#        feature_pairs = [list(feat_pair) for feat_pair in itertools.combinations(self.features, 2)]
+#
+#        # we will only plot the feature iteractions that invlove either Forty or Wt
+#        # just to avoid making soooo many plots
+#        forty_wt_feat_pairs = [fp for fp in feature_pairs if 'Forty' in fp or 'Wt' in fp]
+#        # now calculate the data for the pdp interactions
+#        # we can do that with pdpbox's pdp_interact function
+#        # in the current development version on github, parallelization is supported
+#        # but it didn't work for me so I resorted to using that multiprocess helper
+#        # function from before
+#
+#        train_feat_inters = multiproc_iter_func(N_JOBS, forty_wt_feat_pairs, 
+#                                                pdp.pdp_interact, 'features',
+#                                                model=self.estimator, dataset=train_X_imp_df, model_features=self.features)
+#        # and now plot a grid of PDP interaction plots
+#        # NOTE that the contour colors do not represent the same values
+#        # across the different subplots
+#        fig = plot_2d_pdp_grid(train_feat_inters, forty_wt_feat_pairs)
+#        fig.tight_layout()
+#        fig.suptitle('PDP Interaction Plots (training data)', fontsize=20)
+#        fig.subplots_adjust(top=0.95);
+
+    def analyze_lime(self):
+        "Local Interpretable Model-agnostic Explanamtions"
+
+        train_X_imp = self.imputer.transform(self.X)
+
+        train_X_imp_df = pd.DataFrame(train_X_imp, columns=self.features)
+
+        # create the explainer by passing our training data, 
+        # setting the correct modeling mode, pass in feature names and
+        # make sure we don't discretize the continuous features
+        explainer = LimeTabularExplainer(train_X_imp_df, mode='regression', 
+                                         feature_names=self.features, 
+                                         random_state=RANDOM_STATE, 
+                                         discretize_continuous=False) 
+
+        test_X_imp = self.imputer.transform(self.X_test)
+
+        test_X_imp_df = pd.DataFrame(test_X_imp, columns=self.features)
+
+        # the number of features to include in our predictions
+        num_features = len(self.features)
+        # the index of the instance we want to explaine
+        exp_idx = 2
+        exp = explainer.explain_instance(test_X_imp_df.iloc[exp_idx,:].values, 
+                                         self.estimator.predict, num_features=num_features)
+
+        # a plot of the weights for each feature
+        exp.as_pyplot_figure();
+
+        plt.show()
+
+        lime_expl = test_X_imp_df.apply(explainer.explain_instance, 
+                                        predict_fn=self.estimator.predict, 
+                                        num_features=num_features,
+                                        axis=1)
+
+        # get all the lime predictions
+        lime_pred = lime_expl.apply(lambda x: x.local_pred[0])
+        # RMSE of lime pred
+        mean_squared_error(self.y_pred, lime_pred)**0.5
+
+        # r^2 of lime predictions
+        r2_score(self.y_pred, lime_pred)
+
+
+        # new explainer with smaller kernel_width
+        better_explainer = LimeTabularExplainer(train_X_imp_df, mode='regression', 
+                                                feature_names=self.features, 
+                                                random_state=RANDOM_STATE, 
+                                                discretize_continuous=False,
+                                                kernel_width=1) 
+
+        better_lime_expl = test_X_imp_df.apply(better_explainer.explain_instance, 
+                                               predict_fn=self.estimator.predict, 
+                                               num_features=num_features,
+                                               axis=1)
+
+        # get all the lime predictions
+        better_lime_pred = better_lime_expl.apply(lambda x: x.local_pred[0])
+        # RMSE of lime pred
+        mean_squared_error(self.y_pred, better_lime_pred)**0.5
+
+        # r^2 of lime predictions
+        r2_score(self.y_pred, better_lime_pred)
+
+        # construct a DataFrame with all the feature weights and bias terms from LIME
+        # create an individual dataframe for each explanation
+        lime_dfs = [pd.DataFrame(dict(expl.as_list() + [('bias', expl.intercept[0])]), index=[0]) 
+                    for expl in better_lime_expl]
+        # then concatenate them into one big DataFrame
+        lime_expl_df = pd.concat(lime_dfs, ignore_index=True)
+
+        lime_expl_df.head()
+
+        # scale the data
+        scaled_X = (test_X_imp_df - explainer.scaler.mean_) / explainer.scaler.scale_
+        # calc the lime feature contributions
+        lime_feat_contrib = lime_expl_df[self.features] * scaled_X
+
+        # get the prediction and actual target values to plot
+        y_test_and_pred_df = pd.DataFrame(np.column_stack((self.y_test, self.y_pred)),
+                                          index=self.test_df.Player,
+                                          columns=['true_AV_pctile', 'pred_AV_pctile'])
+
+        # add on bias term, actual av %ile and predicted %ile
+        other_lime_cols = ['bias', 'true_AV_pctile', 'pred_AV_pctile']
+        lime_feat_contrib[other_lime_cols] = pd.DataFrame(np.column_stack((lime_expl_df.bias,
+                                                                           y_test_and_pred_df)))
+
+        lime_feat_contrib.sort_values('pred_AV_pctile', inplace=True)
+
+        lime_feat_contrib.head()
+
+        title = 'LIME Feature Contributions for each prediction in the testing data'
+        fig = double_heatmap(lime_feat_contrib[['true_AV_pctile', 'pred_AV_pctile']].T,
+                             lime_feat_contrib.loc[:, :'bias'].T, title=title,
+                             cbar_label1='%ile', cbar_label2='contribution', 
+                             subplot_top=0.9)
+        # set the x-axis label for the bottom heatmap
+        # fig has 4 axes object, the first 2 are the heatmaps, the other 2 are the colorbars
+        fig.axes[1].set_xlabel('Player');
+
+
+    def analyze_shap(self):
+        "SHapley Additive exPlanations"
+
+        # create our SHAP explainer
+        shap_explainer = shap.TreeExplainer(self.estimator)
+
+        test_X_imp = self.imputer.transform(self.X_test)
+
+        # calculate the shapley values for our test set
+        test_shap_vals = shap_explainer.shap_values(test_X_imp)
+
+        # load JS in order to use some of the plotting functions from the shap
+        # package in the notebook
+        #shap.initjs()
+
+        test_X_imp = self.imputer.transform(self.X_test)
+
+        test_X_imp_df = pd.DataFrame(test_X_imp, columns=self.features)
+
+        # plot the explanation for a single prediction
+        #shap.force_plot(test_shap_vals[0, :], test_X_imp_df.iloc[0, :])
+        #shap.force_plot(test_X_imp_df.iloc[0, :], test_shap_vals[0, :])
+
+        # visualize the first prediction's explanation
+        shap.force_plot(shap_explainer.expected_value, test_shap_vals[0,:], test_X_imp_df.iloc[0,:])
+
+
+#In v0.20 force_plot now requires the base value as the first parameter!
+#Try shap.force_plot(explainer.expected_value, shap_values)
+#for multi-output models try shap.force_plot(explainer.expected_value[0], shap_values[0]).
 
