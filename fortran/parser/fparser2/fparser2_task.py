@@ -137,7 +137,7 @@ class Fparser2Task(pyloco.PylocoTask):
                         ast = f2008_parser(reader)
 
                         astlist[path] = ast
-                        print("PASSED")
+                        print("DONE.")
                 except FortranSyntaxError as err:
                     print("FAILED Syntax with '{}'.".format(str(err)))
                 except NameError as err:
