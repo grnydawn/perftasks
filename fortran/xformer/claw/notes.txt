@@ -1,0 +1,20 @@
+
+requried claw tasks
+- claw wrapper: run claw command in script
+- claw annotator : add claw directives and clauses
+
+[optimization]
+- fortran parser: reuse fparser2 task
+- search space generator : generate a set of claw annotations
+- kernel runner : run generated code and collect metrics
+
+
+[steps]
+1. prepare app: source files and commands to clean/build/run
+2. survey app to know where to annotate with claw directives and clauses
+3. create a search space and drive a opt search with a cycle of:
+  3.1 select a set of source locations for claw-annotations
+  3.2 select claw annotation per each locations
+  3.3 generate new source by running claw
+  3.4 run the generated code and collect metrics
+  3.5 report this cycle and return to 3.1
