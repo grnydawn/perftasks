@@ -37,6 +37,17 @@ class Fparser2Task(pyloco.PylocoTask):
         self.add_option_argument("-D", "--macro", nargs="*", help="Fortran macro definition.")
         self.add_option_argument("-I", "--include", nargs="*", help="Fortran source include paths.")
         self.add_option_argument("-S", "--save", action="store_true", help="Save preprocesed file.")
+        self.add_option_argument("-a", "--alias", metavar="prefix", action="append", help="path alias.")
+
+    def gen_aliases(self, paths, aliases):
+
+        aliased_paths = []
+        for path in paths:
+            for old, new in aliases.items():
+                if path.startswith(old):
+                    aliased_paths.append(new+"/"+path[len(old):])
+                    break
+        return aliased_paths
 
     def perform(self, targs):
 
@@ -51,6 +62,16 @@ class Fparser2Task(pyloco.PylocoTask):
             if "srclist" in self.env:
                 srclist.update(self.env["srclist"])
 
+            aliases = {}
+            if targs.alias:
+                for alias in targs.alias:
+                    for varg in alias.vargs:
+                        adef = varg.split("=", 1)
+                        if len(adef)==2:
+                            aliases[adef[1].strip()] = adef[0].strip()
+                        else:
+                            raise pyloco.UsageError("Wrong alias syntax: %s"%c)
+
             macros = {}
             if targs.macro:
                 for m in targs.macro:
@@ -63,7 +84,10 @@ class Fparser2Task(pyloco.PylocoTask):
             includes = []
             if targs.include:
                 for i in targs.include:
-                    includes.extend([s.strip() for s in i.split(":")])
+                    paths = i.split(":")
+                    apaths = self.gen_aliases(paths, aliases)
+                    includes.extend([s.strip() for s in paths])
+                    includes.extend([s.strip() for s in apaths])
 
             if targs.src:
                 for path in targs.src:
@@ -87,13 +111,20 @@ class Fparser2Task(pyloco.PylocoTask):
                             pack_macros.append("-D{0}={1}".format(k,v))
 
                     pack_includes = []
-                    for p in includes:
+                    aincludes = self.gen_aliases(includes, aliases)
+                    for p in includes+aincludes:
                         pack_includes.append("-I{}".format(p))
                    
+                    if not os.path.isfile(path):
+                        apaths = self.gen_aliases([path], aliases)
+                        if apaths and os.path.isfile(apaths[0]):
+                            path = apaths[0]
+                        else: 
+                            print("'%s' does not exist.".format(path))
+                            continue
+
                     with open(path) as fr:
                         output, err, retcode = run_shcmd('%s %s %s %s' % (pp, flags, " ".join(pack_includes), " ".join(pack_macros)), input=fr.read())
-                        #prep = map(lambda l: '!KGEN'+l if l.startswith('#') else l, output.split('\n'))
-                        #new_lines = self.handle_include(prep)
 
                         if targs.save:
                             root, ext = os.path.splitext(os.path.basename(path))
@@ -112,8 +143,7 @@ class Fparser2Task(pyloco.PylocoTask):
                 except NameError as err:
                     print("FAILED Name with '{}'.".format(str(err)))
                 except IOError as err:
-                    if "No such file" not in str(err):
-                        print("FAILED IO with '{}'.".format(str(err)))
+                    print("FAILED I/O with '{}'.".format(str(err)))
                 except Exception as err:
                     print("FAILED with '{}'.".format(str(err)))
 
