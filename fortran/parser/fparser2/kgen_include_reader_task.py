@@ -9,9 +9,9 @@ import configparser
 
 INTERNAL_NAMELEVEL_SEPERATOR = '__kgen__' # lower-case only
 
-class Fparser2Task(pyloco.Task):
+class Fparser2Task(pyloco.PylocoTask):
 
-    def __init__(self, parent, tid, path, fragment, argv):
+    def __init__(self):
 
         self.add_data_argument("inifile", metavar="path", help="KGen include file.")
 

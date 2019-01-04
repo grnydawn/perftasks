@@ -28,9 +28,9 @@ def run_shcmd(cmd, input=None, **kwargs):
 
     return out, err, proc.returncode
 
-class Fparser2Task(pyloco.Task):
+class Fparser2Task(pyloco.PylocoTask):
 
-    def __init__(self, parent, tid, path, fragment, argv):
+    def __init__(self):
 
         self.add_data_argument("src", metavar="path", nargs="*", help="Fortran source file input.")
 
