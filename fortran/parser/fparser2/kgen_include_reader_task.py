@@ -11,11 +11,12 @@ INTERNAL_NAMELEVEL_SEPERATOR = '__kgen__' # lower-case only
 
 class Fparser2Task(pyloco.PylocoTask):
 
-    def __init__(self):
+    def __init__(self, parent):
 
         self.add_data_argument("inifile", metavar="path", help="KGen include file.")
 
         self.add_option_argument("--only", metavar="path", action="append", help="select a source file.")
+        self.add_option_argument("--except", metavar="path", dest="exc", action="append", help="discard a source file.")
         self.add_option_argument("--macro", action="append", help="create a new macro to apply.")
         self.add_option_argument("--include", action="append", help="create a include to apply.")
 
@@ -37,6 +38,12 @@ class Fparser2Task(pyloco.PylocoTask):
                     for varg in only.vargs:
                         onlylist.append(varg) 
 
+            exclist = []
+            if targs.exc:
+                for exc in targs.exc:
+                    for varg in exc.vargs:
+                        exclist.append(varg) 
+
             for path, sec in ini.items():
 
                 if path in ("DEFAULT",):
@@ -52,6 +59,16 @@ class Fparser2Task(pyloco.PylocoTask):
                     if skip:
                         continue
                         
+                if targs.exc:
+                    skip = False
+                    for exc in exclist:
+                        basename = os.path.basename(path)
+                        if exc in (path, basename):
+                            skip = True
+                            break
+                    if skip:
+                        continue
+
                 macros = {}
                 includes = []
 

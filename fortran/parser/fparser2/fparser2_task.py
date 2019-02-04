@@ -8,7 +8,7 @@ import pyloco
 import subprocess
 
 from fparser.two.parser import ParserFactory
-from fparser.two.utils import walk_ast, FortranSyntaxError
+from fparser.two.utils import FortranSyntaxError
 from fparser.common.readfortran import FortranFileReader, FortranStringReader
 
 def run_shcmd(cmd, input=None, **kwargs):
@@ -30,7 +30,7 @@ def run_shcmd(cmd, input=None, **kwargs):
 
 class Fparser2Task(pyloco.PylocoTask):
 
-    def __init__(self):
+    def __init__(self, parent):
 
         self.add_data_argument("src", metavar="path", nargs="*", help="Fortran source file input.")
 
@@ -145,7 +145,7 @@ class Fparser2Task(pyloco.PylocoTask):
                 except IOError as err:
                     print("FAILED I/O with '{}'.".format(str(err)))
                 except Exception as err:
-                    print("FAILED with '{}'.".format(str(err)))
+                    print("FAILED {0} with '{1}'.".format(err.__class__.__name__, str(err)))
 
         return 0, {"astlist": astlist}, {}
 
