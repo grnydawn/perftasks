@@ -14,7 +14,7 @@ from fparser.common.readfortran import FortranFileReader, FortranStringReader
 def run_shcmd(cmd, input=None, **kwargs):
 
     show_error_msg = None
-    if kwargs.has_key('show_error_msg'):
+    if 'show_error_msg' in kwargs:
         show_error_msg = kwargs['show_error_msg']
         del kwargs['show_error_msg']
 
@@ -157,7 +157,7 @@ class Fparser2Task(pyloco.PylocoTask):
         for i, line in enumerate(lines):
             match = re.match(r'^\s*include\s*("[^"]+"|\'[^\']+\')', line, re.I)
             if match:
-                if Config.include['file'].has_key(self.realpath):
+                if self.realpath in Config.include['file']:
                     include_dirs = Config.include['file'][self.realpath]['path']+Config.include['path']
                 else:
                     include_dirs = Config.include['path']

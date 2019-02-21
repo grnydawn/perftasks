@@ -1,0 +1,37 @@
+Source : https://www.analyticsvidhya.com/blog/2017/01/introduction-to-reinforcement-learning-implementation/
+
+# Step 1: Install keras-rl library
+
+>>> git clone https://github.com/matthiasplappert/keras-rl.git
+>>> cd keras-rl
+>>> python setup.py install
+or
+>>> pip install keras-rl
+
+
+#Step 2: Install dependencies for CartPole environment
+
+>>> pip install h5py
+>>> pip install gym
+
+#Step 3: lets get started!
+
+coding
+
+
+# Install tensorflow from https://www.tensorflow.org/install/pip?lang=python2
+
+>>> python --version
+>>> pip --version
+>>> virtualenv --version
+
+>>> virtualenv --system-site-packages -p python2.7 ./venv
+
+>>> source ./venv/bin/activate  # sh, bash, ksh, or zsh
+
+(venv) >>> pip install --upgrade pip
+(venv) >>> pip list  # show packages installed within the virtual environment
+(venv) >>> deactivate  # don't exit until you're done using TensorFlow
+
+(venv) >>> pip install --upgrade tensorflow
+(venv) >>> python -c "import tensorflow as tf; tf.enable_eager_execution(); print(tf.reduce_sum(tf.random_normal([1000, 1000])))"
