@@ -52,6 +52,7 @@ class Fparser2Task(pyloco.PylocoTask):
     def perform(self, targs):
 
         astlist = {}
+        srcprog = {}
 
         if len(targs.src) == 0 and "srclist" not in self.env:
             print("ERROR: no input source file.")
@@ -75,12 +76,10 @@ class Fparser2Task(pyloco.PylocoTask):
             macros = {}
             if targs.macro:
                 for m in targs.macro:
-                    for c in m.split(","):
-                        mdef = c.split("=", 1)
-                        if len(mdef)==2:
-                            macros[mdef[0].strip()] = mdef[1].strip()
-                        else:
-                            macros[mdef[0].strip()] = None
+                    for v in m.vargs:
+                        macros[v] = None
+                    for k, v in m.kwargs.items():
+                        macros[k] = v 
             includes = []
             if targs.include:
                 for i in targs.include:
@@ -124,7 +123,10 @@ class Fparser2Task(pyloco.PylocoTask):
                             continue
 
                     with open(path) as fr:
-                        output, err, retcode = run_shcmd('%s %s %s %s' % (pp, flags, " ".join(pack_includes), " ".join(pack_macros)), input=fr.read())
+                        code = fr.read()
+                        if type(code) == type(u'A'):
+                            code = code.encode('utf-8')
+                        output, err, retcode = run_shcmd('%s %s %s %s' % (pp, flags, " ".join(pack_includes), " ".join(pack_macros)), input=code)
 
                         if targs.save:
                             root, ext = os.path.splitext(os.path.basename(path))
@@ -132,7 +134,13 @@ class Fparser2Task(pyloco.PylocoTask):
                             with open(savepath, 'w') as fw:
                                 fw.write(output)
                         
+                        if type(output) != type(u'A'):
+                            output = output.decode('utf-8')
+
+                        srcprog[path] = output
+
                         reader = FortranStringReader(output, ignore_comments=False)
+                        reader.id = path
                         f2008_parser = ParserFactory().create(std="f2008")
                         ast = f2008_parser(reader)
 
@@ -147,7 +155,7 @@ class Fparser2Task(pyloco.PylocoTask):
                 except Exception as err:
                     print("FAILED {0} with '{1}'.".format(err.__class__.__name__, str(err)))
 
-        return 0, {"astlist": astlist}, {}
+        return 0, {"astlist": astlist, "srcprog": srcprog}, {}
 
     def handle_include(self, lines):
         import re
