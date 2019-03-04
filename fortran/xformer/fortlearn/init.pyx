@@ -17,12 +17,10 @@ if os.path.isfile(target):
 elif os.path.isdir(target):
     shutil.copytree(target, org)
 
-
 result@pyloco = ${fparser} "${target}" \
-                -- extrae.py \
-                -- run.py \
-                -- fold.py \ # include multiple run and folding
-                -- observation.py # generate reward and observations of folding + code structure
+                -- run.py -n 2 \
+                -- fold.py "${folding_exe}" \ # include multiple run and folding
+                -- obs.py # generate reward and observations of folding + code structure
 
 # save observation as reference performance
 

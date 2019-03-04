@@ -1,0 +1,139 @@
+<?xml version='1.0'?>
+<trace enabled="yes"
+ home="/glade/p/cisl/asap/youngsun/opt/extrae/3.5.4"
+ initial-mode="bursts"
+ type="paraver"
+>
+
+  <mpi enabled="no">
+    <counters enabled="yes" />
+  </mpi>
+
+  <openmp enabled="no">
+    <locks enabled="no" />
+    <counters enabled="yes" />
+  </openmp>
+
+  <pthread enabled="no">
+    <locks enabled="no" />
+    <counters enabled="yes" />
+  </pthread>
+
+  <callers enabled="yes">
+    <mpi enabled="no">1-3</mpi>
+    <sampling enabled="yes">1-6</sampling>
+    <dynamic-memory enabled="no">1-3</dynamic-memory>
+  </callers>
+
+  <user-functions enabled="no" list="/home/bsc41/bsc41273/user-functions.dat" exclude-automatic-functions="no">
+    <counters enabled="yes" />
+  </user-functions>
+
+  <counters enabled="yes">
+    <cpu enabled="yes" starting-set-distribution="random">
+      <set enabled="yes" domain="user" changeat-time="0"  >
+       PAPI_TOT_INS,PAPI_TOT_CYC,PAPI_VEC_DP,PAPI_DP_OPS
+       <sampling enabled="no" frequency="10000000">PAPI_TOT_CYC</sampling>
+      </set>
+      <set enabled="yes" domain="user" changeat-time="0">
+       PAPI_TOT_INS,SIMD_FP_256:PACKED_DOUBLE,PAPI_BR_PRC
+      </set>
+      <set enabled="yes" domain="user" changeat-time="0">
+       PAPI_TOT_INS,PAPI_SP_OPS,PAPI_TOT_CYC
+      </set>
+      <set enabled="yes" domain="user" changeat-time="0">
+       PAPI_TOT_INS,PAPI_FDV_INS,PAPI_FP_OPS
+      </set>
+      <set enabled="yes" domain="user" changeat-time="0">
+       PAPI_TOT_INS,PAPI_L3_TCR,PAPI_VEC_SP
+      </set>
+      <set enabled="yes" domain="user" changeat-time="0">
+       PAPI_TOT_INS,PAPI_L2_ICA,PAPI_L2_ICR,PAPI_L2_TCA,PAPI_L2_TCR,PAPI_L2_TCW
+      </set>
+      <set enabled="yes" domain="user" changeat-time="0">
+       PAPI_TOT_INS,PAPI_L2_DCR,PAPI_L3_DCR,PAPI_L2_DCW,PAPI_L2_ICH
+      </set>
+      <set enabled="yes" domain="user" changeat-time="0">
+        PAPI_TOT_INS,PAPI_L2_DCH,PAPI_L3_DCA,PAPI_L3_ICA,PAPI_L3_ICR,PAPI_L3_TCA
+      </set>
+      <set enabled="yes" domain="user" changeat-time="0">
+       PAPI_TOT_INS,PAPI_FP_INS,PAPI_L2_DCA
+      </set>
+      <set enabled="yes" domain="user" changeat-time="0"  >
+       PAPI_TOT_INS,PAPI_SR_INS,PAPI_BR_MSP
+      </set>
+      <set enabled="yes" domain="user" changeat-time="0"  >
+       PAPI_TOT_INS,PAPI_LD_INS,PAPI_STL_ICY
+      </set>
+      <set enabled="yes" domain="user" changeat-time="0"  >
+       PAPI_TOT_INS,PAPI_BR_INS,RESOURCE_STALLS,PAPI_BR_UCN,PAPI_BR_CN,PAPI_BR_TKN,PAPI_BR_NTK
+      </set>
+      <set enabled="yes" domain="user" changeat-time="0"  >
+       PAPI_TOT_INS,PAPI_TLB_DM,PAPI_L3_TCM,PAPI_L2_STM,PAPI_L3_DCW,PAPI_L3_TCW
+      </set>
+      <set enabled="yes" domain="user" changeat-time="0"  >
+       PAPI_TOT_INS,PAPI_L1_DCM,PAPI_TLB_IM,PAPI_L1_LDM,PAPI_L1_STM
+      </set>
+      <set enabled="yes" domain="user" changeat-time="0"  >
+       PAPI_TOT_INS,PAPI_L2_DCM,PAPI_L1_ICM,PAPI_L2_ICM,PAPI_L1_TCM,PAPI_L2_TCM
+      </set>
+    </cpu>
+    <network enabled="no" />
+    <resource-usage enabled="no" />
+    <memory-usage enabled="no" />
+  </counters>
+
+  <storage enabled="no">
+    <trace-prefix enabled="yes">TRACE</trace-prefix>
+    <size enabled="no">5</size>
+    <temporal-directory enabled="yes">/scratch</temporal-directory>
+    <final-directory enabled="yes">/gpfs/scratch/bsc41/bsc41273</final-directory>
+  </storage>
+
+  <buffer enabled="yes">
+    <size enabled="yes">5000000</size>
+    <circular enabled="no" />
+  </buffer>
+
+  <trace-control enabled="no">
+    <file enabled="no" frequency="5M">/gpfs/scratch/bsc41/bsc41273/control</file>
+    <global-ops enabled="no"></global-ops>
+  </trace-control>
+
+  <others enabled="yes">
+    <minimum-time enabled="no">10M</minimum-time>
+    <finalize-on-signal enabled="yes" 
+      SIGUSR1="no" SIGUSR2="no" SIGINT="yes"
+      SIGQUIT="yes" SIGTERM="yes" SIGXCPU="yes"
+      SIGFPE="yes" SIGSEGV="yes" SIGABRT="yes"
+    />
+    <flush-sampling-buffer-at-instrumentation-point enabled="yes" />
+  </others>
+
+  <bursts enabled="yes">
+    <threshold enabled="yes">100u</threshold>
+    <mpi-statistics enabled="yes" />
+  </bursts>
+
+  <sampling enabled="yes" type="default" period="1m" variability="300u" />
+
+  <dynamic-memory enabled="no">
+    <alloc enabled="yes" threshold="32768" />
+    <free  enabled="yes" />
+  </dynamic-memory>
+
+  <input-output enabled="no" />
+
+  <syscall enabled="no" />
+
+  <merge enabled="yes" 
+    synchronization="default"
+    tree-fan-out="16"
+    max-memory="512"
+    joint-states="yes"
+    keep-mpits="yes"
+    sort-addresses="yes"
+    overwrite="yes"
+  />
+
+</trace>

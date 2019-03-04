@@ -3,6 +3,16 @@
  !Qudrature of the RHS evaluation 
 !!------------------------------------------------
 
+module EXTRAE_MODULE
+    interface
+        subroutine extrae_user_function (enter)
+            integer*4, intent(in) :: enter
+        end subroutine extrae_user_function
+        subroutine extrae_next_hwc_set
+        end subroutine extrae_next_hwc_set
+    end interface
+end module EXTRAE_MODULE
+
       PROGRAM Grad_Term_GPU
       
       IMPLICIT NONE
@@ -11,7 +21,7 @@
 
       INTEGER, PARAMETER :: nx=4      ! element order
       INTEGER, PARAMETER :: npts=nx*nx
-      INTEGER, PARAMETER :: nit=100   ! iteration count
+      INTEGER, PARAMETER :: nit=500   ! iteration count
       INTEGER, PARAMETER :: nelem=6*120*120
 
       REAL(KIND=DOUBLE), PARAMETER :: dt=.005D0 ! fake timestep
@@ -43,7 +53,9 @@
 
       start_time = second()
 
+
       DO it=1,nit
+      call extrae_user_function (1)
       DO ie=1,nelem
          DO ii=1,npts
             k=MODULO(ii-1,nx)+1
@@ -69,7 +81,10 @@
             fly(ii,ie) = fly(ii,ie)+ dt*grad(ii,ie)
          END DO
       END DO
-      
+ 
+      call extrae_user_function (0)
+      call extrae_next_hwc_set
+     
       END DO ! iteration count, it
 
       stop_time = second()

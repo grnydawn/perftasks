@@ -1,0 +1,9 @@
+*.mpits
+*.sym
+*.exe
+*.pcf
+*.prv
+*.row
+*.mod
+*.o
+set*
